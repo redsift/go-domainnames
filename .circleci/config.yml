@@ -1,0 +1,22 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.10
+
+    working_directory: /go/src/github.com/redsift/go-domainnames
+
+    steps:
+      - checkout
+      - run:
+          name: Setup go to junit
+          command: |
+            go get -u github.com/jstemmer/go-junit-report
+            mkdir -p test-results/default
+
+      - run: go test -v ./... 2>&1 | go-junit-report > test-results/default/report.xml
+      - store_test_results:
+          path: test-results
