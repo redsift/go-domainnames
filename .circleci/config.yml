@@ -17,6 +17,6 @@ jobs:
             go get -u github.com/jstemmer/go-junit-report
             mkdir -p test-results/default
 
-      - run: go test -v ./... 2>&1 | go-junit-report > test-results/default/report.xml
+      - run: go test -v ./... 
       - store_test_results:
           path: test-results
