@@ -17,9 +17,6 @@ func DomainAndRoot(domain string) (string, string, string, error) {
 		return domain, "", "", ErrMalformedDomain
 	}
 	ps, icann := publicsuffix.PublicSuffix(domain)
-	if !icann {
-		return domain, "", "", ErrNotAnIcannDomain
-	}
 
 	i := strings.LastIndex(domain, ps)
 	if i < 1 {
@@ -35,6 +32,9 @@ func DomainAndRoot(domain string) (string, string, string, error) {
 		return domain, "", "", ErrMalformedDomain
 	}
 
+	if !icann {
+		return domain, host, ps, ErrNotAnIcannDomain
+	}
 	return domain, host, ps, nil
 }
 

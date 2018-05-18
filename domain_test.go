@@ -19,6 +19,7 @@ func TestVerifyDomainRoots(t *testing.T) {
 		{"redsift.com", "redsift", "com"},
 		{"redsift.pizza", "redsift", "pizza"},
 		{"bluecȯat.com", "bluecȯat", "com"},
+		{"something.pl", "something", "pl"},
 		{"fql.bluecȯat.com", "bluecȯat", "com"},
 	}
 
@@ -35,15 +36,32 @@ func TestVerifyDomainRoots(t *testing.T) {
 	}
 }
 
+func TestVerifyNonIccan(t *testing.T) {
+	test := []struct {
+		d, r, p string // test that we find the registration and the public suffix
+	}{
+		{"mck.krakow.pl", "mck", "krakow.pl"},
+		{"vmnxbironsp01.gsnet.corp", "gsnet", "corp"},
+	}
+
+	for i, ts := range test {
+		t.Run(fmt.Sprintf("%d-%s", i, ts.d), func(t *testing.T) {
+			if _, r, ps, err := DomainAndRoot(ts.d); err != ErrNotAnIcannDomain {
+				t.Error(err)
+			} else if r != ts.r {
+				t.Error(r, "!=", ts.r)
+			} else if ps != ts.p {
+				t.Error(ps, "!=", ts.p)
+			}
+		})
+	}
+}
+
 func TestVerifyDomainFormatErrs(t *testing.T) {
 	for i, ts := range []string{"co.uk", ".co.uk", "foo.dyndns.org", "broken.notatoplevelg", "broken"} {
 		t.Run(fmt.Sprintf("%d-%s", i, ts), func(t *testing.T) {
-			if _, a, ps, err := DomainAndRoot(ts); err == nil {
+			if _, a, _, err := DomainAndRoot(ts); err == nil {
 				t.Error("did not fail", a)
-			} else if a != "" {
-				t.Error("root was not empty")
-			} else if ps != "" {
-				t.Error("public suffix was not empty")
 			} else {
 				t.Log(err)
 			}
