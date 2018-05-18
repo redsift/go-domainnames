@@ -7,24 +7,23 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-// VerifyDomainFormatAndRoot checks for a valid look domain and returns
-// the publicly registrable root for the domain. Returns empty string if
-// domain is already publicly registrable
-func VerifyDomainFormatAndRoot(domain string) (string, error) {
+// DomainAndRoot checks for a valid look domain and returns a normalised version and
+// the publicly registrable root for the domain.
+func DomainAndRoot(domain string) (string, string, string, error) {
 	domain = RemoveFQDN(domain)
 
 	parts := strings.Split(domain, ".")
 	if l := len(parts); l < 2 {
-		return "", ErrMalformedDomain
+		return domain, "", "", ErrMalformedDomain
 	}
 	ps, icann := publicsuffix.PublicSuffix(domain)
 	if !icann {
-		return "", ErrNotAnIcannDomain
+		return domain, "", "", ErrNotAnIcannDomain
 	}
 
 	i := strings.LastIndex(domain, ps)
 	if i < 1 {
-		return "", ErrMalformedPublicSuffix
+		return domain, "", "", ErrMalformedPublicSuffix
 	}
 
 	host := domain[0 : i-1]
@@ -33,14 +32,10 @@ func VerifyDomainFormatAndRoot(domain string) (string, error) {
 		host = host[i+1:]
 	}
 	if host == "" {
-		return "", ErrMalformedDomain
+		return domain, "", "", ErrMalformedDomain
 	}
 
-	if composed := host + "." + ps; composed != domain {
-		return host + "." + ps, nil
-	}
-
-	return "", nil
+	return domain, host, ps, nil
 }
 
 // NormalizeFQDNAndPuny makes a domain fully qualified, trims and lowercases it

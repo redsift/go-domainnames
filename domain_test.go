@@ -7,27 +7,29 @@ import (
 
 func TestVerifyDomainRoots(t *testing.T) {
 	test := []struct {
-		d, r string
+		d, r, p string // test that we find the registration and the public suffix
 	}{
-		{"a.com.foo.dyndns.com", "dyndns.com"},
-		{" bluecȯat.com.com.foo.Dyndns.com ", "dyndns.com"},
-		{" a.com.foo.Dyndns.com ", "dyndns.com"},
-		{"abc.dyi.xyz.redsift.co.uk", "redsift.co.uk"},
-		{"Xyz.redsift.co.uk", "redsift.co.uk"},
-		{"redsift.co.uk", ""},
-		{"Flowmobile.co.uk.", ""},
-		{"redsift.com", ""},
-		{"redsift.pizza", ""},
-		{"bluecȯat.com", ""},
-		{"fql.bluecȯat.com", "bluecȯat.com"},
+		{"a.com.foo.dyndns.com", "dyndns", "com"},
+		{" bluecȯat.com.com.foo.Dyndns.com ", "dyndns", "com"},
+		{" a.com.foo.Dyndns.com ", "dyndns", "com"},
+		{"abc.dyi.xyz.redsift.co.uk", "redsift", "co.uk"},
+		{"Xyz.redsift.co.uk", "redsift", "co.uk"},
+		{"redsift.co.uk", "redsift", "co.uk"},
+		{"Flowmobile.co.uk.", "flowmobile", "co.uk"},
+		{"redsift.com", "redsift", "com"},
+		{"redsift.pizza", "redsift", "pizza"},
+		{"bluecȯat.com", "bluecȯat", "com"},
+		{"fql.bluecȯat.com", "bluecȯat", "com"},
 	}
 
 	for i, ts := range test {
 		t.Run(fmt.Sprintf("%d-%s", i, ts.d), func(t *testing.T) {
-			if r, err := VerifyDomainFormatAndRoot(ts.d); err != nil {
+			if _, r, ps, err := DomainAndRoot(ts.d); err != nil {
 				t.Error(err)
 			} else if r != ts.r {
 				t.Error(r, "!=", ts.r)
+			} else if ps != ts.p {
+				t.Error(ps, "!=", ts.p)
 			}
 		})
 	}
@@ -36,10 +38,12 @@ func TestVerifyDomainRoots(t *testing.T) {
 func TestVerifyDomainFormatErrs(t *testing.T) {
 	for i, ts := range []string{"co.uk", ".co.uk", "foo.dyndns.org", "broken.notatoplevelg", "broken"} {
 		t.Run(fmt.Sprintf("%d-%s", i, ts), func(t *testing.T) {
-			if a, err := VerifyDomainFormatAndRoot(ts); err == nil {
+			if _, a, ps, err := DomainAndRoot(ts); err == nil {
 				t.Error("did not fail", a)
 			} else if a != "" {
 				t.Error("root was not empty")
+			} else if ps != "" {
+				t.Error("public suffix was not empty")
 			} else {
 				t.Log(err)
 			}
